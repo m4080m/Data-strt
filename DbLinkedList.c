@@ -1,10 +1,18 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include "DLinkedList.h"
+#include "DbLinkedList.h"
 
 void ListInit(List *plist){
 	plist->head=NULL;
 	plist->tail=NULL;
+	Node * dummyNodeHead=(Node*)malloc(sizeof(Node));
+	dummyNodeHead->data=NULL;
+	plist->head=dummyNodeHead;
+	Node * dummyNodeTail=(Node*)malloc(sizeof(Node));
+	dummyNodeTail->data=NULL;
+	plist->tail=dummyNodeTail;
+	plist->head->next=plist->tail;
+	plist->tail->prev=plist->head;
 	plist->cur=NULL;
 	plist->numOfData=0;
 }
@@ -12,20 +20,17 @@ void ListInit(List *plist){
 void LInsert(List *plist, LData data){
 	Node * newNode=(Node*)malloc(sizeof(Node));
 	newNode->data=data;
-	newNode->next=NULL;
-	if(plist->head==NULL)
-		plist->head=newNode;
-	else
-		plist->tail->next=newNode;
-	plist->tail=newNode;
+	newNode->prev=plist->tail->prev;
+	plist->tail->prev->next=newNode;
+	plist->tail->prev=newNode;
+	newNode->next=plist->tail;
 	(plist->numOfData)++;
 }
 
 int LFirst(List *plist, LData *pdata){
-	if(plist->head->next==NULL)
+	if(plist->head->next==plist->tail)
 		return FALSE;
 	else{
-		plist->before=plist->head;
 		plist->cur=plist->head->next;
 		*pdata=plist->cur->data;
 		return TRUE;
@@ -33,10 +38,9 @@ int LFirst(List *plist, LData *pdata){
 }
 
 int LNext(List *plist, LData *pdata){
-	if(plist->cur->next==NULL)
+	if(plist->cur==plist->tail)
 		return FALSE;
 	else{
-		plist->before=plist->cur;
 		plist->cur=plist->cur->next;
 		*pdata=plist->cur->data;
 		return TRUE;
@@ -46,8 +50,9 @@ int LNext(List *plist, LData *pdata){
 LData LDelete(List *plist){
 	Node *deleteNode=plist->cur;
 	LData rdata=deleteNode->data;
-	plist->before->next=plist->cur->next;
-	plist->cur=plist->before;
+	deleteNode->prev->next=deleteNode->next;
+	deleteNode->next->prev=deleteNode->prev;
+	plist->cur=deleteNode->prev;
 	free(deleteNode);
 	(plist->numOfData)--;
 	return rdata;
@@ -55,30 +60,11 @@ LData LDelete(List *plist){
 
 void LClear(List *plist){
 	plist->cur=plist->head->next;
-	while(plist->cur->next!=NULL){
+	while(plist->cur!=plist->tail){
 		Node *tempDelete=plist->cur;
 		plist->cur=plist->cur->next;
 		free(tempDelete);
 	}
-	free(plist->cur);
-	plist->head->next=NULL;
-	plist->tail=plist->head;
-}
-
-void SetSortRule(List *plist, int (*comp)(LData d1, LData d2)){
-	plist->comp = comp;
-}
-
-void SInsert(List *plist, LData data){
-	Node * newNode = (Node*)malloc(sizeof(Node));
-	Node * pred = plist->head;
-	newNode->data = data;
-	
-	while (pred->next != NULL && plist->comp(pred->next->data, data) == 0){
-		pred = pred->next;
-	}
-	
-	newNode->next = pred->next;
-	pred->next = newNode;
-	(plist->numOfData)++;
+	plist->head->next=plist->tail;
+	plist->tail->prev=plist->head;
 }

@@ -9,13 +9,13 @@ typedef int LData;
 typedef struct _node{
 	LData data;
 	struct _node *next;
+	struct _node *prev;
 }Node;
 
 typedef struct{
 	Node *head;
 	Node *tail;
 	Node *cur;
-	Node *before;
 	int numOfData;
 	int (*comp)(LData d1, LData d2);
 }List;
@@ -28,6 +28,3 @@ int LNext(List *plist, LData *pdata);
 
 LData LDelete(List *plist);
 void LClear(List *plist);
-
-void SetSortRule(List *plist, int (*comp)(LData d1, LData d2));
-void SInsert(List *plist, LData data);
