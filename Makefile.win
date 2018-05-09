@@ -1,15 +1,15 @@
-# Project: DbLinkedList
+# Project: CQueue
 # Makefile created by Dev-C++ 5.11
 
 CPP      = g++.exe
 CC       = gcc.exe
 WINDRES  = windres.exe
-OBJ      = DbLinkedList.o DbLinkedListMain.o
-LINKOBJ  = DbLinkedList.o DbLinkedListMain.o
+OBJ      = Queue/CQueue.o Queue/CQueueMain.o
+LINKOBJ  = Queue/CQueue.o Queue/CQueueMain.o
 LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -static-libgcc
 INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include"
 CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++"
-BIN      = DbLinkedList.exe
+BIN      = CQueue.exe
 CXXFLAGS = $(CXXINCS) 
 CFLAGS   = $(INCS) 
 RM       = rm.exe -f
@@ -24,8 +24,8 @@ clean: clean-custom
 $(BIN): $(OBJ)
 	$(CC) $(LINKOBJ) -o $(BIN) $(LIBS)
 
-DbLinkedList.o: DbLinkedList.c
-	$(CC) -c DbLinkedList.c -o DbLinkedList.o $(CFLAGS)
+Queue/CQueue.o: Queue/CQueue.c
+	$(CC) -c Queue/CQueue.c -o Queue/CQueue.o $(CFLAGS)
 
-DbLinkedListMain.o: DbLinkedListMain.c
-	$(CC) -c DbLinkedListMain.c -o DbLinkedListMain.o $(CFLAGS)
+Queue/CQueueMain.o: Queue/CQueueMain.c
+	$(CC) -c Queue/CQueueMain.c -o Queue/CQueueMain.o $(CFLAGS)
