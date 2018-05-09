@@ -215,7 +215,7 @@ void PostFixPrint(Data *arr, int *size){
 				printf("%d",arr[i].value.numerator/arr[i].value.denominator);
 			}
 			else{
-				printf("%lf",(double)(arr[i].value.numerator/arr[i].value.denominator));
+				printf("%lf",(double)arr[i].value.numerator/arr[i].value.denominator);
 			}
 		}
 		else if(arr[i].type!=OPERATION_PRIORITY_DUMMY){

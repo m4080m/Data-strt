@@ -8,17 +8,16 @@
 #define OPERATION_PRIORITY_3 3
 
 typedef struct{
+	int type;
+	int value;
+	char operation;
+}Data;
+
+typedef struct{
 	long long int numerator;
 	long long int denominator;
 }Num;
 
-typedef struct{
-	int type;
-	Num value;
-	char operation;
-}Data;
-
-void Translate(char *string, Data *Target, int *length);
 Data PostFixPop(Data *stack, int *top);
 Data PostFixTop(Data *stack, int *top);
 void PostFixPush(Data *stack, int *top, Data k);
@@ -38,23 +37,39 @@ int postFixSize=0;
 Data Dummy={OPERATION_PRIORITY_DUMMY,0,0};
 
 int main(){
-	char org[1000];
-	Data str[1000];
-	int len=0;
-	scanf("%s",org);
-	Translate(org,str,&len);
+	char str[100];
+	scanf("%s",str);
+	int len=strlen(str);
 	for(int i=0;i<len;i++){
-		PostFix(postFixStack, postFixResult, &postFixTop, &postFixSize, str[i]);
+		Data newData;
+		if('0'<=str[i]&&str[i]<='9'){
+			newData.type=NUMBER;
+			newData.value=str[i]-'0';
+		}
+		else if(str[i]=='('||str[i]==')'){
+			newData.type=OPERATION_PRIORITY_1;
+			newData.operation=str[i];
+		}
+		else if(str[i]=='+'||str[i]=='-'){
+			newData.type=OPERATION_PRIORITY_2;
+			newData.operation=str[i];
+		}
+		else if(str[i]=='*'||str[i]=='/'){
+			newData.type=OPERATION_PRIORITY_3;
+			newData.operation=str[i];
+		}
+		
+		PostFix(postFixStack, postFixResult, &postFixTop, &postFixSize, newData);
 	}
 	PostFixFinish(postFixStack, postFixResult, &postFixTop, &postFixSize);
 	PostFixPrint(postFixResult, &postFixSize);
 	printf("\n");
 	Num calculateRes=Calculate(postFixResult, &postFixSize);
-	if(calculateRes.numerator%calculateRes.denominator==0){
-		printf("%d",calculateRes.numerator/calculateRes.denominator);
+	if(calculateRes.denominator%calculateRes.numerator==0){
+		printf("%d",calculateRes.denominator/calculateRes.numerator);
 	}
 	else{
-		printf("%lf",(double)calculateRes.numerator/calculateRes.denominator);
+		printf("%lf",(double)calculateRes.denominator/calculateRes.numerator);
 	}
 }
 
@@ -65,70 +80,6 @@ int gcd(int a, int b){
 	else{
         return gcd(b, a%b);
     }
-}
-
-void Translate(char *string, Data *Target, int *length){
-	int len=strlen(string);
-	int state=NUMBER;
-	for(int i=0;i<len;i++){
-		if(state==NUMBER){
-			if(string[i]=='('){
-				Target[*length].type=OPERATION_PRIORITY_1;
-				Target[*length].operation=string[i];
-				(*length)++;
-				continue;
-			}
-			else{
-				Num current;
-				current.numerator=0;
-				current.denominator=1;
-				int neg=0;
-				if(string[i]=='-'){
-					neg=1;
-					i++;
-				}
-				while('0'<=string[i]&&string[i]<='9'){
-					current.numerator=current.numerator*10+(string[i]-'0');
-					i++;
-				}
-				if(string[i]=='.'){
-					i++;
-					while('0'<=string[i]&&string[i]<='9'){
-						current.numerator=current.numerator*10+(string[i]-'0');
-						current.denominator*=10;
-						i++;
-					}
-				}
-				if(neg){
-					current.numerator*=-1;
-				}
-				i--;
-				state=1;
-				Target[*length].type=NUMBER;
-				Target[*length].value=current;
-				(*length)++;
-				continue;
-			}
-		}
-		else{
-			if(string[i]==')'){
-				Target[*length].type=OPERATION_PRIORITY_1;
-				Target[*length].operation=string[i];
-			}
-			else if(string[i]=='+'||string[i]=='-'){
-				Target[*length].type=OPERATION_PRIORITY_2;
-				Target[*length].operation=string[i];
-				state=0;
-			}
-			else if(string[i]=='*'||string[i]=='/'){
-				Target[*length].type=OPERATION_PRIORITY_3;
-				Target[*length].operation=string[i];
-				state=0;
-			}
-			(*length)++;
-			continue;
-		}
-	}
 }
 
 Data PostFixPop(Data *stack, int *top){
@@ -211,12 +162,7 @@ void PostFixFinish(Data *stack, Data *arr, int *top, int *size){
 void PostFixPrint(Data *arr, int *size){
 	for(int i=0;i<(*size);i++){
 		if(arr[i].type==NUMBER){
-			if(arr[i].value.numerator%arr[i].value.denominator==0){
-				printf("%d",arr[i].value.numerator/arr[i].value.denominator);
-			}
-			else{
-				printf("%lf",(double)(arr[i].value.numerator/arr[i].value.denominator));
-			}
+			printf("%d",arr[i].value);
 		}
 		else if(arr[i].type!=OPERATION_PRIORITY_DUMMY){
 			printf("%c",arr[i].operation);
@@ -225,11 +171,13 @@ void PostFixPrint(Data *arr, int *size){
 }
 
 Num Calculate(Data *arr, int *size){
-	Num calcStack[1000];
+	Num calcStack[100];
 	int calcStackTop=-1;
 	for(int i=0;i<(*size);i++){
 		if(arr[i].type==NUMBER){
-			Num newNum=arr[i].value;
+			Num newNum;
+			newNum.denominator=arr[i].value;
+			newNum.numerator=1;
 			CalcPush(calcStack, &calcStackTop, newNum);
 		}
 		else{
@@ -240,16 +188,16 @@ Num Calculate(Data *arr, int *size){
 			switch(arr[i].operation){
 				case '+':
 					gcdRes=gcd(num1.denominator, num2.denominator);
-					numRes.numerator=(long long int)(num1.denominator*num2.numerator/gcdRes)+(long long int)(num2.denominator*num1.numerator/gcdRes);
-					numRes.denominator=(long long int)(num1.denominator*num2.denominator/gcdRes);
+					numRes.denominator=(long long int)(num1.denominator*num2.numerator/gcdRes)+(long long int)(num2.denominator*num1.numerator/gcdRes);
+					numRes.numerator=(long long int)(num1.numerator*num2.numerator/gcdRes);
 					gcdRes=gcd((long long int)abs(numRes.denominator), numRes.numerator);
 					numRes.denominator/=gcdRes;
 					numRes.numerator/=gcdRes;
 					break;
 				case '-':
-					gcdRes=gcd(num1.denominator, num2.denominator);
-					numRes.numerator=(long long int)(num2.denominator*num1.numerator/gcdRes)-(long long int)(num1.denominator*num2.numerator/gcdRes);
-					numRes.denominator=(long long int)(num1.denominator*num2.denominator/gcdRes);
+					gcdRes=gcd((long long int)abs(num1.denominator), (long long int)abs(num2.denominator));
+					numRes.denominator=(long long int)(num1.denominator*num2.numerator/gcdRes)-(long long int)(num2.denominator*num1.numerator/gcdRes);
+					numRes.numerator=(long long int)(num1.numerator*num2.numerator/gcdRes);
 					gcdRes=gcd((long long int)abs(numRes.denominator), numRes.numerator);
 					numRes.denominator/=gcdRes;
 					numRes.numerator/=gcdRes;
