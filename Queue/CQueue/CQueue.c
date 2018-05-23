@@ -43,7 +43,7 @@ int QNextIdx(int pos){
 	}
 }
 
-Data Qpeak(Que * pque){
+Data QPeak(Que * pque){
 	if(QEmpty(pque)){
 		puts("불러오기가 불가능합니다.");
 		return -1;

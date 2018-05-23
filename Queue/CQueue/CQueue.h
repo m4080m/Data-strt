@@ -5,7 +5,7 @@
 #define FALSE	0
 
 /*** ArrayList¿« ¡§¿« ****/
-#define QUEUE_LEN	100
+#define QUEUE_LEN	1000
 typedef int Data;
 
 typedef struct
@@ -24,6 +24,6 @@ Data Dequeue(Que * pque);
 int QNextIdx(int pos);
 
 int QEmpty(Que *pque);
-Data Qpeak(Que * pque);
+Data QPeak(Que * pque);
 
 #endif

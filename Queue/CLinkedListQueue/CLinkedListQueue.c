@@ -1,6 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include "DLinkedList.h"
+#include "CLinkedListQueue.h"
 
 void ListInit(List *plist){
 	plist->tail=NULL;

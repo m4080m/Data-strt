@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 #include<math.h>
 #define NUMBER 0
 #define OPERATION_PRIORITY_DUMMY -1
@@ -19,21 +20,36 @@ typedef struct{
 }Data;
 
 void Translate(char *string, Data *Target, int *length);
-Data PostFixPop(Data *stack, int *top);
-Data PostFixTop(Data *stack, int *top);
-void PostFixPush(Data *stack, int *top, Data k);
+Data FixPop(Data *stack, int *top);
+Data FixTop(Data *stack, int *top);
+void FixPush(Data *stack, int *top, Data k);
 Num CalcPop(Data *stack, int *top);
 Num CalcTop(Data *stack, int *top);
 void CalcPush(Data *stack, int *top, Num k);
 void PostFix(Data *stack, Data *arr, int *top, int *size, Data k);
-void PostFixFinish(Data *stack, Data *arr, int *top, int *size);
-void PostFixPrint(Data *arr, int *size);
+void PreFix(Data *stack, Data *arr, int *top, int *size, Data k);
+void FixRev(Data *arr, int *size);
+void FixFinish(Data *stack, Data *arr, int *top, int *size);
+void FixPrint(Data *arr, int *size);
+void PrefixToInfix(Data *arr, int *size, char (*stack)[100], int *top);
+void PostfixToInfix(Data *arr, int *size, char (*stack)[100], int *top);
 Num Calculate(Data *arr, int *size);
 
 Data postFixStack[100];
 int postFixTop=-1;
 Data postFixResult[100];
 int postFixSize=0;
+
+Data preFixStack[100];
+int preFixTop=-1;
+Data preFixResult[100];
+int preFixSize=0;
+
+char preToInStack[100][100];
+int preToInTop=-1;
+
+char postToInStack[100][100];
+int postToInTop=-1;
 
 Data Dummy={OPERATION_PRIORITY_DUMMY,0,0};
 
@@ -43,12 +59,23 @@ int main(){
 	int len=0;
 	scanf("%s",org);
 	Translate(org,str,&len);
+	for(int i=len-1;i>=0;i--){
+		PreFix(preFixStack, preFixResult, &preFixTop, &preFixSize, str[i]);
+	}
+	FixFinish(preFixStack, preFixResult, &preFixTop, &preFixSize);
+	FixRev(preFixResult, &preFixSize);
+	FixPrint(preFixResult, &preFixSize);
+	printf("\n");
 	for(int i=0;i<len;i++){
 		PostFix(postFixStack, postFixResult, &postFixTop, &postFixSize, str[i]);
 	}
-	PostFixFinish(postFixStack, postFixResult, &postFixTop, &postFixSize);
-	PostFixPrint(postFixResult, &postFixSize);
+	FixFinish(postFixStack, postFixResult, &postFixTop, &postFixSize);
+	FixPrint(postFixResult, &postFixSize);
 	printf("\n");
+	PrefixToInfix(preFixResult, &preFixSize, preToInStack, &preToInTop);
+	printf("%s\n",preToInStack[preToInTop]);
+	PostfixToInfix(postFixResult, &postFixSize, postToInStack, &postToInTop);
+	printf("%s\n",postToInStack[postToInTop]);
 	Num calculateRes=Calculate(postFixResult, &postFixSize);
 	if(calculateRes.numerator%calculateRes.denominator==0){
 		printf("%d",calculateRes.numerator/calculateRes.denominator);
@@ -131,7 +158,7 @@ void Translate(char *string, Data *Target, int *length){
 	}
 }
 
-Data PostFixPop(Data *stack, int *top){
+Data FixPop(Data *stack, int *top){
 	if(*top == -1){
 		return Dummy;
 	}
@@ -141,14 +168,14 @@ Data PostFixPop(Data *stack, int *top){
 	}
 }
 
-Data PostFixTop(Data *stack, int *top){
+Data FixTop(Data *stack, int *top){
 	if(*top == -1){
 		return Dummy;
 	}
 	else return stack[*top];
 }
 
-void PostFixPush(Data *stack, int *top, Data k){
+void FixPush(Data *stack, int *top, Data k){
 	(*top)++;
 	stack[*top]=k;
 }
@@ -174,52 +201,156 @@ void PostFix(Data *stack, Data *arr, int *top, int *size, Data k){
 	}
 	else if(k.type==OPERATION_PRIORITY_1){
 		if(k.operation=='('){
-			PostFixPush(postFixStack, &postFixTop,k);
+			FixPush(postFixStack, &postFixTop,k);
 		}
 		else if(k.operation=')'){
-			while(PostFixTop(postFixStack, &postFixTop).type!=OPERATION_PRIORITY_1){
-				arr[*size]=PostFixPop(postFixStack, &postFixTop);
+			while(FixTop(postFixStack, &postFixTop).type!=OPERATION_PRIORITY_1){
+				arr[*size]=FixPop(postFixStack, &postFixTop);
 				(*size)++;
 			}
-			PostFixPop(postFixStack, &postFixTop);
+			FixPop(postFixStack, &postFixTop);
 		}
 	}
 	else if(k.type==OPERATION_PRIORITY_2){
-		while(PostFixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_2){
-			arr[*size]=PostFixPop(postFixStack, &postFixTop);
+		while(FixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_2){
+			arr[*size]=FixPop(postFixStack, &postFixTop);
 			(*size)++;
 		}
-		PostFixPush(postFixStack, &postFixTop,k);
+		FixPush(postFixStack, &postFixTop,k);
 	}
 	else if(k.type==OPERATION_PRIORITY_3){
-		while(PostFixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_3){
-			arr[*size]=PostFixPop(postFixStack, &postFixTop);
+		while(FixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_3){
+			arr[*size]=FixPop(postFixStack, &postFixTop);
 			(*size)++;
 		}
-		PostFixPush(postFixStack, &postFixTop,k);
+		FixPush(postFixStack, &postFixTop,k);
 	}
 }
 
-void PostFixFinish(Data *stack, Data *arr, int *top, int *size){
-	while(PostFixTop(postFixStack, &postFixTop).type!=OPERATION_PRIORITY_DUMMY){
-		arr[*size]=PostFixPop(postFixStack, &postFixTop);
+void FixRev(Data *arr, int *size){
+	Data temp;
+	for(int i=0;i<(*size)/2;i++){
+		temp=arr[i];
+		arr[i]=arr[(*size)-1-i];
+		arr[(*size)-1-i]=temp;
+	}
+}
+
+void FixFinish(Data *stack, Data *arr, int *top, int *size){
+	while(FixTop(postFixStack, &postFixTop).type!=OPERATION_PRIORITY_DUMMY){
+		arr[*size]=FixPop(postFixStack, &postFixTop);
 		(*size)++;
 	}
 	arr[*size]=Dummy;
 }
 
-void PostFixPrint(Data *arr, int *size){
+void FixPrint(Data *arr, int *size){
 	for(int i=0;i<(*size);i++){
 		if(arr[i].type==NUMBER){
 			if(arr[i].value.numerator%arr[i].value.denominator==0){
-				printf("%d",arr[i].value.numerator/arr[i].value.denominator);
+				printf("%d ",arr[i].value.numerator/arr[i].value.denominator);
 			}
 			else{
-				printf("%lf",(double)arr[i].value.numerator/arr[i].value.denominator);
+				printf("%lf ",(double)arr[i].value.numerator/arr[i].value.denominator);
 			}
 		}
 		else if(arr[i].type!=OPERATION_PRIORITY_DUMMY){
-			printf("%c",arr[i].operation);
+			printf("%c ",arr[i].operation);
+		}
+	}
+}
+
+void PreFix(Data *stack, Data *arr, int *top, int *size, Data k){
+	if(k.type==NUMBER){
+		arr[*size]=k;
+		(*size)++;
+	}
+	else if(k.type==OPERATION_PRIORITY_1){
+		if(k.operation==')'){
+			FixPush(postFixStack, &postFixTop,k);
+		}
+		else if(k.operation='('){
+			while(FixTop(postFixStack, &postFixTop).type!=OPERATION_PRIORITY_1){
+				arr[*size]=FixPop(postFixStack, &postFixTop);
+				(*size)++;
+			}
+			FixPop(postFixStack, &postFixTop);
+		}
+	}
+	else if(k.type==OPERATION_PRIORITY_2){
+		while(FixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_2){
+			arr[*size]=FixPop(postFixStack, &postFixTop);
+			(*size)++;
+		}
+		FixPush(postFixStack, &postFixTop,k);
+	}
+	else if(k.type==OPERATION_PRIORITY_3){
+		while(FixTop(postFixStack, &postFixTop).type>=OPERATION_PRIORITY_3){
+			arr[*size]=FixPop(postFixStack, &postFixTop);
+			(*size)++;
+		}
+		FixPush(postFixStack, &postFixTop,k);
+	}
+}
+
+void PrefixToInfix(Data *arr, int *size, char (*stack)[100], int *top){
+	for(int i=(*size)-1;i>=0;i--){
+		char strTemp[100], strPop1[100], strPop2[100], opr[2];
+		int dec,sign;
+		if(arr[i].type==NUMBER){
+			(*top)++;
+			if(arr[i].value.denominator==1){
+				ltoa(arr[i].value.numerator, strTemp, 10);
+				strcpy(stack[*top], strTemp);
+			}
+			else{
+				sprintf(strTemp, "%lf", (double)arr[i].value.numerator/arr[i].value.denominator);
+				strcpy(stack[*top], strTemp);
+			}
+		}
+		else{
+			opr[0]=arr[i].operation;
+			opr[1]=0;
+			strcpy(strPop1, stack[*top]);
+			(*top)--;
+			strcpy(strPop2, stack[*top]);
+			strcpy(strTemp, "(");
+			strcat(strTemp, strPop1);
+			strcat(strTemp, opr);
+			strcat(strTemp, strPop2);
+			strcat(strTemp, ")");
+			strcpy(stack[*top], strTemp);
+		}
+	}
+}
+
+void PostfixToInfix(Data *arr, int *size, char (*stack)[100], int *top){
+	for(int i=0;i<(*size);i++){
+		char strTemp[100], strPop1[100], strPop2[100], opr[2];
+		int dec,sign;
+		if(arr[i].type==NUMBER){
+			(*top)++;
+			if(arr[i].value.denominator==1){
+				ltoa(arr[i].value.numerator, strTemp, 10);
+				strcpy(stack[*top], strTemp);
+			}
+			else{
+				sprintf(strTemp, "%lf", (double)arr[i].value.numerator/arr[i].value.denominator);
+				strcpy(stack[*top], strTemp);
+			}
+		}
+		else{
+			opr[0]=arr[i].operation;
+			opr[1]=0;
+			strcpy(strPop2, stack[*top]);
+			(*top)--;
+			strcpy(strPop1, stack[*top]);
+			strcpy(strTemp, "(");
+			strcat(strTemp, strPop1);
+			strcat(strTemp, opr);
+			strcat(strTemp, strPop2);
+			strcat(strTemp, ")");
+			strcpy(stack[*top], strTemp);
 		}
 	}
 }
